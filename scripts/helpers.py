@@ -35,7 +35,7 @@ def myprint(message, is_red="", email_also=""):
         else:
             print(message + file_and_line_info)
     except:
-        print(message + "(there was an error with `myprint`)")
+        print(message + "  (there was an error with `myprint`)")
 
 def send_email(message):
     if os.getenv("LOCAL_DEV") == "true":
@@ -59,7 +59,7 @@ def get_database_engine(force_cloud=False):
         return create_engine(os.getenv("LOCAL_DATABASE_URL"))
 
 # set to True to run real tasks locally
-force_cloud = False
+force_cloud = True
 engine = get_database_engine(force_cloud=force_cloud)
 
 bad_accuracy_types = ["place", "state", "street_center"]
@@ -229,7 +229,11 @@ def geocode_and_split_by_accuracy(df, table=""):
     accurate = df.apply(lambda job: is_accurate(job, housing_addendum=housing_addendum), axis=1)
     accurate_jobs, inaccurate_jobs = df.copy()[accurate], df.copy()[~accurate]
     inaccurate_jobs["fixed"] = False
+
     myprint(f"There were {len(accurate_jobs)} accurate jobs.\nThere were {len(inaccurate_jobs)} inaccurate jobs.")
+    accurate_jobs.to_excel("h2b_accurates.xlsx")
+    inaccurate_jobs.to_excel("h2b_inaccurates.xlsx")
+    
     return accurate_jobs, inaccurate_jobs
 
 def fix_zip_code(zip_code):
