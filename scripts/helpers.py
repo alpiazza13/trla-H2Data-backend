@@ -24,15 +24,18 @@ def print_red(message):
     print(Fore.RED + message + Style.RESET_ALL)
 
 def myprint(message, is_red="", email_also=""):
-    if email_also != "yes":
-        frameinfo = getframeinfo((stack()[1][0]))
-        file_and_line_info = Fore.LIGHTBLUE_EX + "  (" + frameinfo.filename.split("/")[-1] + ", line " + str(frameinfo.lineno) + ")" + Style.RESET_ALL
-    else:
-        file_and_line_info = ""
-    if is_red == "red":
-        print_red(message + file_and_line_info)
-    else:
-        print(message + file_and_line_info)
+    try:
+        if email_also != "yes":
+            frameinfo = getframeinfo((stack()[1][0]))
+            file_and_line_info = Fore.LIGHTBLUE_EX + "  (" + frameinfo.filename.split("/")[-1] + ", line " + str(frameinfo.lineno) + ")" + Style.RESET_ALL
+        else:
+            file_and_line_info = ""
+        if is_red == "red":
+            print_red(message + file_and_line_info)
+        else:
+            print(message + file_and_line_info)
+    except:
+        print(f"myprint function failed for some reason, here's the message:\n{message}")
 
 def send_email(message):
     if os.getenv("LOCAL_DEV") == "true":
@@ -56,7 +59,7 @@ def get_database_engine(force_cloud=False):
         return create_engine(os.getenv("LOCAL_DATABASE_URL"))
 
 # set to True to run real tasks locally
-force_cloud = False
+force_cloud = True
 engine = get_database_engine(force_cloud=force_cloud)
 
 bad_accuracy_types = ["place", "state", "street_center"]
@@ -207,26 +210,29 @@ def geocode_table(df, worksite_or_housing, check_previously_geocoded=False):
     return df
 
 def geocode_and_split_by_accuracy(df, table=""):
-    if table == "dol_h2b":
-        df = geocode_table(df, "worksite", check_previously_geocoded=True)
-    elif table == "housing addendum":
-        df = geocode_table(df, "housing", check_previously_geocoded=True)
-    elif table == "dol_h2a":
-        df = geocode_table(df, "worksite", check_previously_geocoded=True)
-        df = geocode_table(df, "housing", check_previously_geocoded=True)
-    else:
-        df = geocode_table(df, "worksite")
-        if "HOUSING_ADDRESS_LOCATION" in df.columns:
-            df = geocode_table(df, "housing")
-        else:
-            print_red_and_email("Not geocoding housing because HOUSING_ADDRESS_LOCATION is not present. This should be fine, and hopefully just means there were only H-2B jobs in today's run, but you may want to check.", "Not geocoding housing today")
-            # pass
+    # if table == "dol_h2b":
+    #     df = geocode_table(df, "worksite", check_previously_geocoded=True)
+    # elif table == "housing addendum":
+    #     df = geocode_table(df, "housing", check_previously_geocoded=True)
+    # elif table == "dol_h2a":
+    #     df = geocode_table(df, "worksite", check_previously_geocoded=True)
+    #     df = geocode_table(df, "housing", check_previously_geocoded=True)
+    # else:
+    #     df = geocode_table(df, "worksite")
+    #     if "HOUSING_ADDRESS_LOCATION" in df.columns:
+    #         df = geocode_table(df, "housing")
+    #     else:
+    #         print_red_and_email("Not geocoding housing because HOUSING_ADDRESS_LOCATION is not present. This should be fine, and hopefully just means there were only H-2B jobs in today's run, but you may want to check.", "Not geocoding housing today")
+    #         # pass
 
     housing_addendum = (table == "housing addendum")
     accurate = df.apply(lambda job: is_accurate(job, housing_addendum=housing_addendum), axis=1)
     accurate_jobs, inaccurate_jobs = df.copy()[accurate], df.copy()[~accurate]
     inaccurate_jobs["fixed"] = False
     myprint(f"There were {len(accurate_jobs)} accurate jobs.\nThere were {len(inaccurate_jobs)} inaccurate jobs.")
+
+    accurate_jobs.to_excel("acc.xlsx")
+    inaccurate_jobs.to_excel("inacc.xlsx")
     return accurate_jobs, inaccurate_jobs
 
 def fix_zip_code(zip_code):
