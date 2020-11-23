@@ -52,9 +52,9 @@ def geocode_manage_split_merge(dol_jobs, h2a=True):
         if pd.isnull(yes_no):
             return False
         stripped_val = yes_no.strip()
-        if stripped_val == "Y":
+        if stripped_val in ["Y", "yes", "Yes", "YES"]:
             return True
-        elif stripped_val == "N" or stripped_val == "N/A":
+        elif stripped_val == ["N", "NO", "No", "no", "N/A"]:
             return False
         else:
             print_red_and_email(f"There was an error converting {stripped_val} to boolean.", "Error Converting to Boolean")
@@ -69,7 +69,7 @@ def geocode_manage_split_merge(dol_jobs, h2a=True):
     helpers.merge_all_data(accurate_dol_jobs, inaccurate_dol_jobs)
 
 def push_merged_to_sql():
-    dol_file_path = "H2B_Disclosure_Data_FY2020.xlsx"
+    dol_file_path = "dol_data/H2B_Disclosure_Data_FY2020.xlsx"
     dol_jobs = pd.read_excel(dol_file_path, converters={'ATTORNEY_AGENT_PHONE':str,'ATTORNEY_AGENT_PHONE_EXT':str, 'PHONE_TO_APPLY':str,
                                                                                         'SOC_CODE': str, 'NAICS_CODE': str, 'EMPLOYER_POC_PHONE': str, 'EMPLOYER_PHONE': str,
                                                                                         'EMPLOYER_POC_PHONE_EXT': str, 'EMPLOYER_PHONE_EXT': str})

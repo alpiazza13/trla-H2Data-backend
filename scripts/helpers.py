@@ -233,7 +233,7 @@ def geocode_and_split_by_accuracy(df, table=""):
     myprint(f"There were {len(accurate_jobs)} accurate jobs.\nThere were {len(inaccurate_jobs)} inaccurate jobs.")
     accurate_jobs.to_excel("h2b_accurates.xlsx")
     inaccurate_jobs.to_excel("h2b_inaccurates.xlsx")
-    
+
     return accurate_jobs, inaccurate_jobs
 
 def fix_zip_code(zip_code):
@@ -256,7 +256,10 @@ def is_accurate(job, housing_addendum=False):
         myprint("Checking accuracies for housing addendum.")
         automatic_accurate_conditions = job["HOUSING_STATE"].lower() not in our_states
     elif job["Visa type"] == "H-2B":
-        automatic_accurate_conditions = job["WORKSITE_STATE"].lower() not in our_states
+        try:
+            automatic_accurate_conditions = job["WORKSITE_STATE"].lower() not in our_states
+        except:
+            automatic_accurate_conditions = False
     else:
         automatic_accurate_conditions = (handle_null(job["WORKSITE_STATE"]).lower() not in our_states) and (handle_null(job["HOUSING_STATE"]).lower() not in our_states)
 
